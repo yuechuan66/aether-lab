@@ -3,8 +3,14 @@ import path from 'node:path'
 
 /** 定位运行中的 @deepseek-ai/dsh 安装根目录（含 package.json 的目录） */
 export function findDshRoot(): string | null {
-  const entry = process.argv[1]
+  let entry = process.argv[1]
   if (!entry) return null
+  // argv[1] 通常是 bin 符号链接，需 realpath 到包内 lib/bin.js
+  try {
+    entry = fs.realpathSync(entry)
+  } catch {
+    // 保留原值继续尝试
+  }
   let d = path.dirname(path.resolve(entry))
   for (let i = 0; i < 4; i++) {
     const pj = path.join(d, 'package.json')
