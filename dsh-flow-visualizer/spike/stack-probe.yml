@@ -1,0 +1,3 @@
+- insert:
+    - id: stack-probe
+      name: '/Users/admin/aether/aether-lab/dsh-flow-visualizer/spike/stack-probe.ts'

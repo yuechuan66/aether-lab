@@ -1,0 +1,30 @@
+# Flow Tracer 插件加载配置。
+# 用法：dsh --profile headless --patch ./plugin.patch.yml "<task>"
+#       dsh web --patch ./plugin.patch.yml（浏览器 UI）
+- insert:
+    - id: flow-tracer
+      name: '/Users/admin/aether/aether-lab/dsh-flow-visualizer/src/index.ts'
+      config:
+        enabled: true
+        port: 9527
+        snapshotLimit: 1024
+        maxBufferSize: 2000
+        sensitiveFields:
+          - api_key
+          - token
+          - password
+          - authorization
+        toolToPlugin:
+          bash: '@deepseek-ai/dsh-tool-bash'
+          terminate_agent: '@deepseek-ai/dsh-tool-terminate'
+          run_code: '@deepseek-ai/dsh-code-runtime'
+          web_search: '@deepseek-ai/dsh-tool-web'
+          fetch_url: '@deepseek-ai/dsh-tool-web'
+          write: '@deepseek-ai/dsh-tool-fs'
+          read: '@deepseek-ai/dsh-tool-fs'
+          edit: '@deepseek-ai/dsh-tool-fs'
+          read_file: '@deepseek-ai/dsh-tool-fs'
+          write_file: '@deepseek-ai/dsh-tool-fs'
+          list_dir: '@deepseek-ai/dsh-tool-fs'
+          glob_files: '@deepseek-ai/dsh-tool-fs'
+          launch_browser: '@deepseek-ai/dsh-tool-web'

@@ -1,0 +1,30 @@
+{
+  "name": "dsh-plugin-flow-tracer",
+  "version": "0.1.0",
+  "description": "DSH flow visualizer plugin: collect runtime events and stream them to a local viewer",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "restart": "bash scripts/restart.sh",
+    "start": "bash scripts/restart.sh --no-open",
+    "stop": "bash scripts/stop.sh"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": ">=4.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "typescript": "^5.5.0"
+  }
+}

@@ -1,0 +1,5 @@
+# Flow Tracer Spike overlay——将探针插件插入 web profile。
+# 用法：dsh web --patch /绝对路径/spike/cordis.yml
+- insert:
+    - id: flow-tracer-probe
+      name: '/Users/admin/aether/aether-lab/dsh-flow-visualizer/spike/probe.ts'
