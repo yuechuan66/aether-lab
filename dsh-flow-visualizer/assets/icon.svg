@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="28" fill="#0e1116"/>
+  <!-- 注册者层（虚线 = 静态契约） -->
+  <line x1="24" y1="36" x2="104" y2="36" stroke="#5c6673" stroke-width="4" stroke-dasharray="9 7" stroke-linecap="round"/>
+  <!-- 连接线：注册 → 事件 -->
+  <line x1="40" y1="41" x2="40" y2="52" stroke="#4f8cff" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+  <line x1="88" y1="41" x2="88" y2="52" stroke="#4f8cff" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+  <!-- 事件层（胶囊 = 分发节点） -->
+  <rect x="22" y="54" width="36" height="18" rx="9" fill="#4f8cff"/>
+  <rect x="70" y="54" width="36" height="18" rx="9" fill="#4f8cff"/>
+  <!-- 连接线：事件 → 监听 -->
+  <line x1="40" y1="74" x2="40" y2="83" stroke="#12b886" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+  <line x1="88" y1="74" x2="88" y2="83" stroke="#12b886" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+  <!-- 监听者层 -->
+  <rect x="22" y="85" width="36" height="12" rx="6" fill="#12b886"/>
+  <rect x="70" y="85" width="36" height="12" rx="6" fill="#12b886"/>
+</svg>

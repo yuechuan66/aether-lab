@@ -5,26 +5,24 @@ DSH 会话数据流可视化插件：实时采集 Cordis 事件总线上的 Agen
 ## 安装
 
 ```bash
-# 1. 安装到目标 profile（web / tui / headless）
+# 安装到目标 profile（web / tui / headless），声明了 dsh.bundle，自动进 profile 层栈
 dsh plugin --profile web add dsh-plugin-flow-tracer
 
-# 2. 编辑 ~/.dsh/profiles/web/cordis.patch.yml，追加：
-```
-
-```yaml
-- insert:
-    - id: flow-tracer
-      name: 'dsh-plugin-flow-tracer'
-```
-
-```bash
-# 3. 重启 DSH
+# 重启 DSH
 dsh web
 ```
 
 启动日志出现 `[flow-tracer] Viewer at http://127.0.0.1:9527` 即就绪。
 
-> DSH 的 profile 树由 bundles + patch 层构成，第三方包需手动 insert 一次；这是平台机制，非本插件限制。
+自定义配置：在 `~/.dsh/profiles/web/cordis.patch.yml` 按 id 覆盖（last write wins）：
+
+```yaml
+- insert:
+    - id: flow-tracer
+      config:
+        autoOpen: true
+        port: 9527
+```
 
 ## 使用
 

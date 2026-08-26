@@ -1,0 +1,5 @@
+# flow-tracer bundle patch layer: mount the flow visualizer plugin.
+# Users override config by id in their profile cordis.patch.yml (last write wins).
+- insert:
+    - id: flow-tracer
+      name: 'dsh-plugin-flow-tracer'
