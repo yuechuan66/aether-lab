@@ -66,6 +66,20 @@ cd viewer && pnpm install && pnpm build   # 产物由插件托管于 9527
 npm run typecheck   # 后端类型检查
 ```
 
+## 故障排查
+
+**安装后 DSH 启动报 `credentials-local: the value for "version"/"refs" ... must be a string`**
+
+这是 DSH 环境问题，非本插件缺陷：旧版 DSH（rc.7）的凭证解析器只认扁平格式，而你的 `~/.dsh/.credentials.yaml` 是新版工具写的嵌套格式，安装流程的 relink 暴露了该不一致。修复（二选一）：
+
+```bash
+# 方法一：把凭证文件拍平（新旧解析器都认）；先备份
+cp ~/.dsh/.credentials.yaml ~/.dsh/.credentials.yaml.bak
+sed -i '' -e '/^version:/d' -e '/^refs:/d' -e 's/^ *//' ~/.dsh/.credentials.yaml
+
+# 方法二：升级 DSH 到带凭证迁移逻辑的版本
+```
+
 ## 边界与路线
 
 - 事件注册者（owner）与工具归属来自静态表/安装产物扫描：Cordis 运行时无注册者元数据（见 `docs/技术方案.md` D.7 spike 结论）
