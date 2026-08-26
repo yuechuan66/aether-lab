@@ -32,20 +32,17 @@ var import_react = require("react");
 var import_jsx_runtime = require("react/jsx-runtime");
 var PORTS = [9527, 9528, 9529, 9530, 9531, 9532];
 async function discoverPort() {
-  const results = await Promise.all(
-    PORTS.map(async (p) => {
-      try {
-        const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), 300);
-        const res = await fetch(`http://127.0.0.1:${p}/plugins`, { signal: ctrl.signal });
-        clearTimeout(timer);
-        return res.ok ? p : null;
-      } catch {
-        return null;
-      }
-    })
-  );
-  return results.find((x) => x !== null) ?? null;
+  for (const p of PORTS) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 300);
+      const res = await fetch(`http://127.0.0.1:${p}/plugins`, { signal: ctrl.signal });
+      clearTimeout(timer);
+      if (res.ok) return p;
+    } catch {
+    }
+  }
+  return null;
 }
 var wrap = {
   width: "100%",
@@ -56,12 +53,25 @@ var wrap = {
   color: "#666",
   fontSize: 13
 };
+function hostIsDark() {
+  return document.body.hasAttribute("data-ds-dark-theme");
+}
 function FlowTab(props) {
   const sessionId = props?.sessionId ?? props?.session?.id ?? null;
   const [port, setPort] = (0, import_react.useState)("searching");
   const [alive, setAlive] = (0, import_react.useState)("waiting");
   const [loaded, setLoaded] = (0, import_react.useState)(false);
+  const [dark, setDark] = (0, import_react.useState)(hostIsDark);
   const portRef = (0, import_react.useRef)(null);
+  (0, import_react.useEffect)(() => {
+    const observer = new MutationObserver(() => {
+      const d = hostIsDark();
+      setDark(d);
+      window.dispatchEvent(new CustomEvent("fv-host-theme", { detail: { dark: d } }));
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ["data-ds-dark-theme"] });
+    return () => observer.disconnect();
+  }, []);
   (0, import_react.useEffect)(() => {
     let cancelled = false;
     discoverPort().then((p) => {
@@ -85,27 +95,32 @@ function FlowTab(props) {
     const t = setTimeout(() => setAlive((a) => a === "waiting" ? false : a), 2500);
     return () => clearTimeout(t);
   }, [loaded, alive]);
+  const iframeRef = (0, import_react.useRef)(null);
+  (0, import_react.useEffect)(() => {
+    iframeRef.current?.contentWindow?.postMessage({ source: "dsh-flow-host", type: "theme", dark }, "*");
+  }, [dark, loaded]);
   if (port === "searching") return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: wrap, children: "\u6B63\u5728\u8FDE\u63A5\u6570\u636E\u6D41\u670D\u52A1\u2026" });
   if (port === null) {
     return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { style: wrap, children: "\u672A\u68C0\u6D4B\u5230 flow-tracer \u670D\u52A1\uFF08127.0.0.1:9527-9532\uFF09\uFF0C\u786E\u8BA4 DSH \u5DF2\u52A0\u8F7D\u8BE5\u63D2\u4EF6" });
   }
   const params = new URLSearchParams();
   params.set("embed", "1");
+  params.set("theme", dark ? "dark" : "light");
   if (sessionId) params.set("session", sessionId);
   const src = `http://127.0.0.1:${port}/?${params.toString()}`;
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { style: { position: "relative", width: "100%", height: "100%" }, children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
       "iframe",
       {
+        ref: iframeRef,
         src,
         title: "DSH \u6570\u636E\u6D41",
         onLoad: () => setLoaded(true),
         style: {
           width: "100%",
           height: "100%",
-          border: "1px solid #d0d3d9",
-          borderRadius: 10,
-          background: "#1a1b1e",
+          border: "none",
+          background: "transparent",
           display: "block"
         }
       }

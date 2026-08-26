@@ -152,6 +152,20 @@ export default function App() {
     if (sessions.has(sid) && currentSessionId !== sid) selectSession(sid)
   }, [sessions, currentSessionId, selectSession])
 
+  // 主题跟随：?theme= 初始值 + 宿主 postMessage 实时切换
+  const [theme, setTheme] = useState<'dark' | 'light'>(() =>
+    new URLSearchParams(window.location.search).get('theme') === 'light' ? 'light' : 'dark',
+  )
+  useEffect(() => {
+    const onMsg = (e: MessageEvent) => {
+      if (e.data?.source === 'dsh-flow-host' && e.data?.type === 'theme') {
+        setTheme(e.data.dark ? 'dark' : 'light')
+      }
+    }
+    window.addEventListener('message', onMsg)
+    return () => window.removeEventListener('message', onMsg)
+  }, [])
+
   // 嵌入握手：宿主 tab 据此判断 iframe 内 JS 是否存活
   useEffect(() => {
     if (window.parent !== window) {
@@ -165,13 +179,14 @@ export default function App() {
   }, [currentSessionId, sessions])
 
   return (
-    <MantineProvider defaultColorScheme="dark">
+    <MantineProvider defaultColorScheme={theme}>
       <div
+        data-fv-theme={theme}
         style={{
           height: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          background: 'var(--mantine-color-dark-8)',
+          background: embed ? 'transparent' : 'var(--mantine-color-dark-8)',
           overflow: 'hidden',
         }}
       >
