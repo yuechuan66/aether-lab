@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Badge,
   Button,
@@ -141,7 +141,23 @@ export default function App() {
   useEventStream()
   const currentSessionId = useViewerStore((s) => s.currentSessionId)
   const sessions = useViewerStore((s) => s.sessions)
+  const selectSession = useViewerStore((s) => s.selectSession)
   const [tab, setTab] = useState<string | null>('bus')
+
+  // 深链：?session=<id>（web tab iframe 按会话直连）
+  const embed = new URLSearchParams(window.location.search).get('embed') === '1'
+  useEffect(() => {
+    const sid = new URLSearchParams(window.location.search).get('session')
+    if (!sid) return
+    if (sessions.has(sid) && currentSessionId !== sid) selectSession(sid)
+  }, [sessions, currentSessionId, selectSession])
+
+  // 嵌入握手：宿主 tab 据此判断 iframe 内 JS 是否存活
+  useEffect(() => {
+    if (window.parent !== window) {
+      window.parent.postMessage({ source: 'dsh-flow-viewer', type: 'ready' }, '*')
+    }
+  }, [])
 
   const eventCount = useMemo(() => {
     if (!currentSessionId) return 0
@@ -159,9 +175,9 @@ export default function App() {
           overflow: 'hidden',
         }}
       >
-        <Header />
+        {!embed && <Header />}
 
-        <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: 12, padding: 12 }}>
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: 12, padding: embed ? 8 : 12 }}>
           {/* 左栏：会话叙事线 */}
           <div style={{ width: 400, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
             <Panel

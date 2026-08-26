@@ -204,7 +204,8 @@ function openBrowser(url) {
   }
 }
 function serveStatic(req, res) {
-  const urlPath = (req.url === "/" ? "/index.html" : req.url) ?? "/index.html";
+  const rawPath = (req.url ?? "/").split("?")[0].split("#")[0];
+  const urlPath = rawPath === "/" || rawPath === "" ? "/index.html" : rawPath;
   const filePath = path.join(VIEWER_DIST, path.normalize(urlPath));
   if (!filePath.startsWith(VIEWER_DIST)) return false;
   if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) return false;
@@ -245,20 +246,24 @@ var Emitter = class {
         }
         return;
       }
+      const JSON_HEADERS = {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      };
       if (req.url?.startsWith("/trace/") && req.method === "GET") {
         const traceId = decodeURIComponent(req.url.split("/trace/")[1]);
         const trace = this.collector.getTrace(traceId);
-        res.writeHead(200, { "Content-Type": "application/json" });
+        res.writeHead(200, JSON_HEADERS);
         res.end(JSON.stringify(trace ?? null));
         return;
       }
       if (req.url === "/unmapped-tools" && req.method === "GET") {
-        res.writeHead(200, { "Content-Type": "application/json" });
+        res.writeHead(200, JSON_HEADERS);
         res.end(JSON.stringify({ tools: this.collector.unmappedToolList() }));
         return;
       }
       if (req.url === "/plugins" && req.method === "GET") {
-        res.writeHead(200, { "Content-Type": "application/json" });
+        res.writeHead(200, JSON_HEADERS);
         res.end(JSON.stringify({ plugins: this.pluginProvider() }));
         return;
       }

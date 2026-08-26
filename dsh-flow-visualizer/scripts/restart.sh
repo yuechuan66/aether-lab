@@ -15,5 +15,5 @@ lsof -ti:9527 | xargs kill -9 2>/dev/null || true
 lsof -ti:3080 | xargs kill -9 2>/dev/null || true
 sleep 1
 
-echo "==> 启动 DSH + flow-tracer…"
-exec dsh web --patch ./plugin.patch.yml "$@"
+echo "==> 启动 DSH + flow-tracer（flowdev profile，源码加载）…"
+exec dsh --profile flowdev "$@"

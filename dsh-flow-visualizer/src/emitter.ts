@@ -34,7 +34,9 @@ function openBrowser(url: string): void {
 }
 
 function serveStatic(req: http.IncomingMessage, res: http.ServerResponse): boolean {
-  const urlPath = (req.url === '/' ? '/index.html' : req.url) ?? '/index.html'
+  // 剥离 query/hash（深链 ?embed=1&session=… 不能进文件路径）
+  const rawPath = (req.url ?? '/').split('?')[0].split('#')[0]
+  const urlPath = rawPath === '/' || rawPath === '' ? '/index.html' : rawPath
   // 防止路径穿越
   const filePath = path.join(VIEWER_DIST, path.normalize(urlPath))
   if (!filePath.startsWith(VIEWER_DIST)) return false
@@ -82,23 +84,29 @@ export class Emitter {
         return
       }
 
+      // JSON 路由统一允许跨域（web tab iframe 从 3080 探测/拉取）
+      const JSON_HEADERS = {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      }
+
       if (req.url?.startsWith('/trace/') && req.method === 'GET') {
         const traceId = decodeURIComponent(req.url.split('/trace/')[1])
         const trace = this.collector.getTrace(traceId)
-        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.writeHead(200, JSON_HEADERS)
         res.end(JSON.stringify(trace ?? null))
         return
       }
 
       if (req.url === '/unmapped-tools' && req.method === 'GET') {
-        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.writeHead(200, JSON_HEADERS)
         res.end(JSON.stringify({ tools: this.collector.unmappedToolList() }))
         return
       }
 
       // 插件清单
       if (req.url === '/plugins' && req.method === 'GET') {
-        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.writeHead(200, JSON_HEADERS)
         res.end(JSON.stringify({ plugins: this.pluginProvider() }))
         return
       }
