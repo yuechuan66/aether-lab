@@ -201,7 +201,7 @@ export function PluginTreeView() {
         </Group>
       </Group>
 
-      <Box onWheel={onWheel} style={{ overflow: 'auto', maxHeight: isFullscreen ? 'calc(100vh - 80px)' : undefined }}>
+      <Box onWheel={onWheel} style={{ overflow: 'auto', maxHeight: isFullscreen ? 'calc(100vh - 80px)' : undefined, position: 'relative' }}>
         <svg width={width * zoom} height={height * zoom} style={{ display: 'block' }}>
           <g transform={`scale(${zoom})`}>
           {/* 依赖边 */}
@@ -252,12 +252,12 @@ export function PluginTreeView() {
               >
                 <rect
                   x={q.x} y={q.y} width={NODE_W} height={NODE_H} rx={5}
-                  fill={isHover ? '#20293d' : 'var(--mantine-color-dark-6)'}
+                  fill={isHover ? 'var(--fv-node-hover)' : 'var(--mantine-color-dark-6)'}
                   stroke={isHover ? '#74c0fc' : order !== null ? '#12b886' : 'var(--mantine-color-dark-5)'}
                   strokeWidth={isHover ? 2 : 1}
                 />
                 <circle cx={q.x + 10} cy={q.y + 8} r={3} fill={color} />
-                <text x={q.x + 20} y={q.y + 17} fill={disabled ? 'var(--mantine-color-gray-7)' : order !== null ? 'white' : 'var(--mantine-color-gray-4)'} fontSize={10} fontFamily="monospace">
+                <text x={q.x + 20} y={q.y + 17} fill={disabled ? 'var(--fv-text-3)' : order !== null ? 'var(--fv-text-strong)' : 'var(--fv-text-2)'} fontSize={10} fontFamily="monospace">
                   {id.length > 22 ? id.slice(0, 22) + '…' : id}
                 </text>
                 {order !== null && (
@@ -271,41 +271,64 @@ export function PluginTreeView() {
           })}
           </g>
         </svg>
+
+        {/* 节点旁 Popover 详情 */}
+        {selectedNode && pos.get(selectedNode.id) && (() => {
+          const q = pos.get(selectedNode.id)!
+          const POP_W = 280
+          const right = (q.x + NODE_W) * zoom + 10
+          const left = right + POP_W > width * zoom + 40 ? Math.max(q.x * zoom - POP_W - 10, 4) : right
+          return (
+            <Box
+              p="xs"
+              style={{
+                position: 'absolute',
+                left,
+                top: q.y * zoom,
+                width: POP_W,
+                zIndex: 10,
+                border: '1px solid var(--mantine-color-dark-4)',
+                borderRadius: 8,
+                background: 'var(--mantine-color-dark-7)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+              }}
+            >
+              <Group gap={6} mb={6} justify="space-between" wrap="nowrap">
+                <Text size={11} lh={1.5} fw={700} truncate style={{ fontFamily: 'monospace' }}>{selectedNode.id}</Text>
+                <ActionIcon size="xs" variant="subtle" onClick={() => setSelectedId(null)}>✕</ActionIcon>
+              </Group>
+              <Stack gap={4}>
+                <Text size={10} lh={1.5} c="dimmed" truncate>包名：<span style={{ fontFamily: 'monospace' }}>{selectedNode.name}</span></Text>
+                <Text size={10} lh={1.5} c="dimmed">域：{categorize(selectedNode.name)}</Text>
+                <Text size={10} lh={1.5} c="dimmed">
+                  阶段：<Badge variant="light" size="xs" color={selectedNode.phase === 'active' ? 'teal' : selectedNode.phase === 'failed' ? 'red' : 'gray'}>{selectedNode.phase}</Badge>
+                </Text>
+                {selectedNode.provides.length > 0 && (
+                  <Group gap={4}>
+                    <Text size={10} lh={1.5} c="dimmed" style={{ flexShrink: 0 }}>提供：</Text>
+                    {selectedNode.provides.slice(0, 6).map((s) => (
+                      <Badge key={s} variant="light" size="xs" color="teal" styles={{ label: { fontFamily: 'monospace' } }}>{s}</Badge>
+                    ))}
+                    {selectedNode.provides.length > 6 && <Text size={10} lh={1.5} c="dimmed">+{selectedNode.provides.length - 6}</Text>}
+                  </Group>
+                )}
+                {selectedNode.inject.length > 0 && (
+                  <Group gap={4}>
+                    <Text size={10} lh={1.5} c="dimmed" style={{ flexShrink: 0 }}>依赖：</Text>
+                    {selectedNode.inject.slice(0, 6).map((s) => (
+                      <Badge key={s} variant="light" size="xs" color="blue" styles={{ label: { fontFamily: 'monospace' } }}>{s}</Badge>
+                    ))}
+                    {selectedNode.inject.length > 6 && <Text size={10} lh={1.5} c="dimmed">+{selectedNode.inject.length - 6}</Text>}
+                  </Group>
+                )}
+              </Stack>
+            </Box>
+          )
+        })()}
       </Box>
 
-      {/* 详情面板 */}
-      {selectedNode && (
-        <Box mt="md" p="sm" style={{ border: '1px solid var(--mantine-color-dark-4)', borderRadius: 8 }}>
-          <Group gap={6} mb={8} justify="space-between">
-            <Text size="sm" fw={700} style={{ fontFamily: 'monospace' }}>{selectedNode.id}</Text>
-            <ActionIcon size="xs" variant="subtle" onClick={() => setSelectedId(null)}>✕</ActionIcon>
-          </Group>
-          <Stack gap={4}>
-            <Text size="xs" c="dimmed">包名：<span style={{ fontFamily: 'monospace', color: 'var(--mantine-color-blue-3)' }}>{selectedNode.name}</span></Text>
-            <Text size="xs" c="dimmed">域：{categorize(selectedNode.name)}</Text>
-            <Text size="xs" c="dimmed">阶段：<Badge variant="light" size="xs" color={selectedNode.phase === 'active' ? 'teal' : selectedNode.phase === 'failed' ? 'red' : 'gray'}>{selectedNode.phase}</Badge></Text>
-            {selectedNode.provides.length > 0 && (
-              <Group gap={4}>
-                <Text size="xs" c="dimmed">提供：</Text>
-                {selectedNode.provides.map((s) => (
-                  <Badge key={s} variant="light" size="xs" color="teal" styles={{ label: { fontFamily: 'monospace' } }}>{s}</Badge>
-                ))}
-              </Group>
-            )}
-            {selectedNode.inject.length > 0 && (
-              <Group gap={4}>
-                <Text size="xs" c="dimmed">依赖：</Text>
-                {selectedNode.inject.map((s) => (
-                  <Badge key={s} variant="light" size="xs" color="blue" styles={{ label: { fontFamily: 'monospace' } }}>{s}</Badge>
-                ))}
-              </Group>
-            )}
-          </Stack>
-        </Box>
-      )}
-
       <Group gap="md" mt={8}>
-        <Text size="xs" c="dimmed">hover 高亮依赖边，点击看详情</Text>
+        <Text size="xs" c="dimmed">hover 高亮依赖边，点击在节点旁看详情</Text>
         <Text size="xs" c="dimmed">圆点颜色 = 功能域</Text>
         <Text size="xs" c="dimmed">绿圈数字 = 参与顺序</Text>
       </Group>

@@ -120,7 +120,7 @@ function TimeWaterfall({
                 size={10}
                 lh={1.4}
                 fw={600}
-                c={selected ? 'white' : active ? 'gray.1' : 'gray.4'}
+                c={selected ? 'var(--fv-text-1)' : 'var(--fv-text-2)'}
                 truncate
                 style={{ fontFamily: 'monospace' }}
               >
@@ -193,7 +193,7 @@ function EventInspector({ item, onClose }: { item: BusEvent; onClose: () => void
       }}
     >
       <Group gap="xs" mb={8} wrap="nowrap">
-        <Text size={11} lh={1.4} fw={700} c="white" style={{ fontFamily: 'monospace' }}>
+        <Text size={11} lh={1.4} fw={700} c="var(--fv-text-strong)" style={{ fontFamily: 'monospace' }}>
           {item.def?.event ?? item.ev.phase}
         </Text>
         <Text size={10} lh={1.4} fw={600} c={MODE_COLORS[mode]}>
@@ -210,7 +210,7 @@ function EventInspector({ item, onClose }: { item: BusEvent; onClose: () => void
         </ActionIcon>
       </Group>
       {item.def?.desc && (
-        <Text size={10} lh={1.4} c="gray.5" mb={6}>
+        <Text size={10} lh={1.4} c="var(--fv-text-3)" mb={6}>
           {item.def.desc}
         </Text>
       )}
@@ -228,7 +228,7 @@ function EventInspector({ item, onClose }: { item: BusEvent; onClose: () => void
                 borderRadius: 6,
                 overflow: 'auto',
                 maxHeight: 160,
-                color: 'var(--mantine-color-gray-3)',
+                color: 'var(--fv-text-2)',
               }}
             >
               {JSON.stringify(k === 'input' ? item.ev.input : item.ev.output, null, 2) ?? 'null'}
@@ -333,14 +333,14 @@ export function EventBusView() {
             <rect x={0} y={LISTENER_Y - 14} width={totalWidth} height={26} fill="rgba(18,184,134,0.05)" rx={4} />
 
             {/* 层标签 */}
-            <text x={8} y={DECLARER_Y + 4} fill="var(--mantine-color-gray-6)" fontSize={10} fontWeight={700}>注册者</text>
-            <text x={8} y={PRODUCER_Y + 4} fill="#9ecbff" fontSize={10} fontWeight={700}>触发者</text>
-            <text x={8} y={BUS_Y + 4} fill="var(--mantine-color-gray-3)" fontSize={10} fontWeight={700}>事件</text>
-            <text x={8} y={LISTENER_Y + 4} fill="var(--mantine-color-teal-4)" fontSize={10} fontWeight={700}>监听者</text>
+            <text x={8} y={DECLARER_Y + 4} fill="var(--fv-text-3)" fontSize={10} fontWeight={700}>注册者</text>
+            <text x={8} y={PRODUCER_Y + 4} fill="var(--fv-label-blue)" fontSize={10} fontWeight={700}>触发者</text>
+            <text x={8} y={BUS_Y + 4} fill="var(--fv-text-2)" fontSize={10} fontWeight={700}>事件</text>
+            <text x={8} y={LISTENER_Y + 4} fill="var(--fv-label-teal)" fontSize={10} fontWeight={700}>监听者</text>
 
             {/* 时间轴 */}
             {items.filter((_, i) => i % 2 === 0).map((it, i) => (
-              <text key={`t${i}`} x={it.x} y={AXIS_H - 8} fill="var(--mantine-color-gray-6)" fontSize={9}>
+              <text key={`t${i}`} x={it.x} y={AXIS_H - 8} fill="var(--fv-text-3)" fontSize={9}>
                 {fmtTime(it.ev.timestamp)}
               </text>
             ))}
@@ -374,7 +374,7 @@ export function EventBusView() {
                 >
                   {/* 注册者方块（虚线 = 静态契约关系，非运行时调用） */}
                   <rect x={it.x} y={DECLARER_Y - 8} width={it.width} height={16} rx={3} fill="none" stroke="var(--mantine-color-gray-7)" strokeWidth={1} strokeDasharray="3 2" />
-                  <text x={cx} y={DECLARER_Y + 4} textAnchor="middle" fill="var(--mantine-color-gray-6)" fontSize={8} fontFamily="monospace">
+                  <text x={cx} y={DECLARER_Y + 4} textAnchor="middle" fill="var(--fv-text-3)" fontSize={8} fontFamily="monospace">
                     {fit(cleanName(it.def?.owner ?? 'unknown'), it.width, 8)}
                   </text>
 
@@ -383,7 +383,7 @@ export function EventBusView() {
 
                   {/* 触发者方块 */}
                   <rect x={it.x} y={PRODUCER_Y - 8} width={it.width} height={16} rx={3} fill={color} opacity={0.3} />
-                  <text x={cx} y={PRODUCER_Y + 4} textAnchor="middle" fill="var(--mantine-color-gray-3)" fontSize={8} fontFamily="monospace">
+                  <text x={cx} y={PRODUCER_Y + 4} textAnchor="middle" fill="var(--fv-text-2)" fontSize={8} fontFamily="monospace">
                     {fit(cleanName(producer), it.width, 8)}
                   </text>
 
@@ -412,7 +412,7 @@ export function EventBusView() {
 
                   {/* 监听者方块 */}
                   <rect x={it.x} y={LISTENER_Y - 8} width={it.width} height={16} rx={3} fill="rgba(18,184,134,0.25)" stroke="var(--mantine-color-teal-6)" strokeWidth={1} />
-                  <text x={cx} y={LISTENER_Y + 4} textAnchor="middle" fill="var(--mantine-color-gray-2)" fontSize={8} fontFamily="monospace">
+                  <text x={cx} y={LISTENER_Y + 4} textAnchor="middle" fill="var(--fv-text-2)" fontSize={8} fontFamily="monospace">
                     {fit(cleanName(listener), it.width, 8)}
                   </text>
                 </g>

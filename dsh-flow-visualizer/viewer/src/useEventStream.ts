@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useViewerStore } from './store'
+import { getApiBase } from './apiBase'
 import type { FlowEvent, FlowTrace, TraceStatus } from './types'
 
 export function useEventStream() {
@@ -9,7 +10,7 @@ export function useEventStream() {
   const finishTrace = useViewerStore((s) => s.finishTrace)
 
   useEffect(() => {
-    const es = new EventSource('/events')
+    const es = new EventSource(`${getApiBase()}/events`)
 
     es.addEventListener('trace.list', (e) => {
       const { traceIds } = JSON.parse(e.data)

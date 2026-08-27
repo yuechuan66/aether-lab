@@ -67,6 +67,10 @@ cd viewer && pnpm install && pnpm build   # 产物由插件托管于 9527
 npm run typecheck   # 后端类型检查
 ```
 
+## 已知问题
+
+- **Hub 桌面客户端**：「数据流」tab 在部分桌面版本（WKWebView 壳）中不渲染（组件挂载即失败，清缓存/重启无效）；同版本 Chrome 访问正常。已报障 Hub 维护者。桌面用户请暂用浏览器访问 `http://127.0.0.1:<port>`（端口见启动日志）。
+
 ## 故障排查
 
 **安装后 DSH 启动报 `credentials-local: the value for "version"/"refs" ... must be a string`**

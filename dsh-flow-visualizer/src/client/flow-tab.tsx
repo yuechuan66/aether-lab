@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
+import { AppBody } from '../../viewer/src/App'
+import { setApiBase } from '../../viewer/src/apiBase'
+import { injectStyles } from '../../viewer/src/styles'
 
 const PORTS = [9527, 9528, 9529, 9530, 9531, 9532]
 
-/** 本机顺序探测 flow-tracer 服务端口（命中即停，减少控制台噪音） */
 async function discoverPort(): Promise<number | null> {
   for (const p of PORTS) {
     try {
@@ -12,142 +14,107 @@ async function discoverPort(): Promise<number | null> {
       clearTimeout(timer)
       if (res.ok) return p
     } catch {
-      // 继续下一个端口
+      // 下一个
     }
   }
   return null
 }
 
-const wrap: React.CSSProperties = {
-  width: '100%',
-  height: '100%',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  color: '#666',
-  fontSize: 13,
-}
-
-/** 宿主主题：DSH 在 body 上挂 data-ds-dark-theme（参考 dsh-plugin-agent-workflow） */
-function hostIsDark(): boolean {
-  return document.body.hasAttribute('data-ds-dark-theme')
-}
-
-/** 「数据流」tab 组件：iframe 嵌入插件自带 Viewer，按会话深链，主题跟随宿主。 */
-export function FlowTab(props: any) {
-  const sessionId: string | null = props?.sessionId ?? props?.session?.id ?? null
-  const [port, setPort] = useState<number | null | 'searching'>('searching')
-  const [alive, setAlive] = useState<boolean | 'waiting'>('waiting')
-  const [loaded, setLoaded] = useState(false)
-  const [dark, setDark] = useState<boolean>(hostIsDark)
-  const portRef = useRef<number | null>(null)
-
-  // 宿主主题切换（body 属性变化）→ 实时通知 iframe
+/** 宿主主题：body[data-ds-dark-theme]（同 dsh-plugin-agent-workflow 信号） */
+function useHostDark(): boolean {
+  const [dark, setDark] = useState(() => document.body.hasAttribute('data-ds-dark-theme'))
   useEffect(() => {
-    const observer = new MutationObserver(() => {
-      const d = hostIsDark()
-      setDark(d)
-      window.dispatchEvent(new CustomEvent('fv-host-theme', { detail: { dark: d } }))
-    })
-    observer.observe(document.body, { attributes: true, attributeFilter: ['data-ds-dark-theme'] })
-    return () => observer.disconnect()
+    const ob = new MutationObserver(() => setDark(document.body.hasAttribute('data-ds-dark-theme')))
+    ob.observe(document.body, { attributes: true, attributeFilter: ['data-ds-dark-theme'] })
+    return () => ob.disconnect()
   }, [])
+  return dark
+}
+
+/**
+ * 「数据流」tab：原生渲染完整 Viewer（与独立页面一致，embed 无 header）。
+ * 数据经 SSE 直连插件服务（桌面壳拦截 iframe 但不拦 fetch/SSE）。
+ */
+export function FlowTab(props: any) {
+  const dark = useHostDark()
+  const [port, setPort] = useState<number | null | 'searching'>('searching')
+  // 固定容器：fixed 锁定到 tab 可视区（tab 行底 → 输入框顶），脱流故不撑宿主、无反馈循环；
+  // 容器内部复用独立 Viewer 的自适应布局（事件明细/总线/插件树各自内滚）。
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  const [box, setBox] = useState<{ top: number; left: number; width: number; bottom: number } | null>(null)
+
+  useEffect(() => {
+    const measure = () => {
+      const s = sentinelRef.current
+      if (!s) return
+      const tabEl = Array.from(document.querySelectorAll('[role="tab"]')).find((t) =>
+        (t.textContent || '').includes('数据流'),
+      ) as HTMLElement | undefined
+      const ta = document.querySelector('textarea')
+      const sr = s.getBoundingClientRect()
+      const top = tabEl ? tabEl.getBoundingClientRect().bottom + 8 : sr.top
+      const bottom = ta ? ta.getBoundingClientRect().top - 8 : window.innerHeight - 8
+      setBox({ top, left: sr.left, width: sr.width, bottom: Math.max(bottom, top + 240) })
+    }
+    measure()
+    const t1 = setTimeout(measure, 300)
+    const t2 = setTimeout(measure, 1200)
+    window.addEventListener('resize', measure)
+    return () => {
+      clearTimeout(t1)
+      clearTimeout(t2)
+      window.removeEventListener('resize', measure)
+    }
+  }, [port])
 
   useEffect(() => {
     let cancelled = false
     discoverPort().then((p) => {
-      if (cancelled) return
-      portRef.current = p
-      setPort(p)
+      if (!cancelled) setPort(p)
     })
     return () => {
       cancelled = true
     }
   }, [])
 
-  // viewer 挂载后 postMessage 握手；iframe 加载完 2.5s 仍无握手 = 内部 JS 被宿主拦截
   useEffect(() => {
-    const onMsg = (e: MessageEvent) => {
-      if (e.data?.source === 'dsh-flow-viewer' && e.data?.type === 'ready') setAlive(true)
+    if (typeof port === 'number') {
+      setApiBase(`http://127.0.0.1:${port}`)
+      injectStyles()
     }
-    window.addEventListener('message', onMsg)
-    return () => window.removeEventListener('message', onMsg)
-  }, [])
+  }, [port])
 
-  useEffect(() => {
-    if (!loaded || alive !== 'waiting') return
-    const t = setTimeout(() => setAlive((a) => (a === 'waiting' ? false : a)), 2500)
-    return () => clearTimeout(t)
-  }, [loaded, alive])
-
-  const iframeRef = useRef<HTMLIFrameElement>(null)
-
-  // 主题变化实时推给 iframe（不重载）
-  useEffect(() => {
-    iframeRef.current?.contentWindow?.postMessage({ source: 'dsh-flow-host', type: 'theme', dark }, '*')
-  }, [dark, loaded])
-
-  if (port === 'searching') return <div style={wrap}>正在连接数据流服务…</div>
+  if (port === 'searching') {
+    return <div style={{ padding: 24, color: '#666', fontSize: 13 }}>正在连接数据流服务…</div>
+  }
   if (port === null) {
-    return <div style={wrap}>未检测到 flow-tracer 服务（127.0.0.1:9527-9532），确认 DSH 已加载该插件</div>
+    return (
+      <div style={{ padding: 24, color: '#666', fontSize: 13 }}>
+        未检测到 flow-tracer 服务（127.0.0.1:9527-9532），确认 DSH 已加载该插件
+      </div>
+    )
   }
 
-  const params = new URLSearchParams()
-  params.set('embed', '1')
-  params.set('theme', dark ? 'dark' : 'light')
-  if (sessionId) params.set('session', sessionId)
-  const src = `http://127.0.0.1:${port}/?${params.toString()}`
-
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <iframe
-        ref={iframeRef}
-        src={src}
-        title="DSH 数据流"
-        onLoad={() => setLoaded(true)}
-        style={{
-          width: '100%',
-          height: '100%',
-          border: 'none',
-          background: 'transparent',
-          display: 'block',
-        }}
-      />
-      {alive === false && (
+    <>
+      <div ref={sentinelRef} style={{ height: 0 }} />
+      {box && (
         <div
           style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 10,
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(255,255,255,0.92)',
-            borderRadius: 10,
-            color: '#444',
-            fontSize: 13,
-            textAlign: 'center',
-            padding: 24,
+            position: 'fixed',
+            top: box.top,
+            left: box.left,
+            width: box.width,
+            height: box.bottom - box.top,
+            zIndex: 5,
           }}
         >
-          <div>iframe 已加载但 viewer 未响应，可能被宿主安全策略拦截。</div>
-          <div style={{ fontFamily: 'monospace', fontSize: 11, color: '#888' }}>{src}</div>
-          <button
-            onClick={() => window.open(src.replace('embed=1&', ''), '_blank')}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 6,
-              border: '1px solid #c6c9cf',
-              background: '#fff',
-              cursor: 'pointer',
-              fontSize: 13,
-            }}
-          >
-            独立窗口打开
-          </button>
+          <AppBody embed sessionId={props?.sessionId ?? null} theme={dark ? 'dark' : 'light'} />
+          <div style={{ position: 'absolute', right: 6, bottom: 4, fontSize: 9, color: '#9aa0ab', opacity: 0.6, pointerEvents: 'none' }}>
+            flow-tracer 0.8.9
+          </div>
         </div>
       )}
-    </div>
+    </>
   )
 }

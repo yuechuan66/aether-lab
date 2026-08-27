@@ -105,13 +105,13 @@ function Header() {
           {stats && (
             <>
               <Text size="xs" c="dimmed" style={{ whiteSpace: 'nowrap' }}>
-                事件 <Text span fw={600} c="white">{stats.count}</Text>
+                事件 <Text span fw={600} c="var(--fv-text-strong)">{stats.count}</Text>
               </Text>
               <Text size="xs" c="dimmed" style={{ whiteSpace: 'nowrap' }}>
-                工具 <Text span fw={600} c="white">{stats.tools}</Text>
+                工具 <Text span fw={600} c="var(--fv-text-strong)">{stats.tools}</Text>
               </Text>
               <Text size="xs" c="dimmed" style={{ whiteSpace: 'nowrap' }}>
-                耗时 <Text span fw={600} c="white">{fmtDuration(stats.duration)}</Text>
+                耗时 <Text span fw={600} c="var(--fv-text-strong)">{fmtDuration(stats.duration)}</Text>
               </Text>
               <Badge variant="light" color={statusColor} size="xs">
                 {stats.status}
@@ -137,41 +137,27 @@ function Header() {
   )
 }
 
-export default function App() {
+export interface AppBodyProps {
+  /** 嵌入模式：无独立 header、透明背景 */
+  embed?: boolean
+  /** 深链会话 id */
+  sessionId?: string | null
+  /** 主题，默认 dark */
+  theme?: 'dark' | 'light'
+}
+
+/** Viewer 主体：独立页面与原生 tab 共用。 */
+export function AppBody({ embed = false, sessionId = null, theme = 'light' }: AppBodyProps) {
   useEventStream()
   const currentSessionId = useViewerStore((s) => s.currentSessionId)
   const sessions = useViewerStore((s) => s.sessions)
   const selectSession = useViewerStore((s) => s.selectSession)
   const [tab, setTab] = useState<string | null>('bus')
 
-  // 深链：?session=<id>（web tab iframe 按会话直连）
-  const embed = new URLSearchParams(window.location.search).get('embed') === '1'
   useEffect(() => {
-    const sid = new URLSearchParams(window.location.search).get('session')
-    if (!sid) return
-    if (sessions.has(sid) && currentSessionId !== sid) selectSession(sid)
-  }, [sessions, currentSessionId, selectSession])
-
-  // 主题跟随：?theme= 初始值 + 宿主 postMessage 实时切换
-  const [theme, setTheme] = useState<'dark' | 'light'>(() =>
-    new URLSearchParams(window.location.search).get('theme') === 'light' ? 'light' : 'dark',
-  )
-  useEffect(() => {
-    const onMsg = (e: MessageEvent) => {
-      if (e.data?.source === 'dsh-flow-host' && e.data?.type === 'theme') {
-        setTheme(e.data.dark ? 'dark' : 'light')
-      }
-    }
-    window.addEventListener('message', onMsg)
-    return () => window.removeEventListener('message', onMsg)
-  }, [])
-
-  // 嵌入握手：宿主 tab 据此判断 iframe 内 JS 是否存活
-  useEffect(() => {
-    if (window.parent !== window) {
-      window.parent.postMessage({ source: 'dsh-flow-viewer', type: 'ready' }, '*')
-    }
-  }, [])
+    if (!sessionId) return
+    if (sessions.has(sessionId) && currentSessionId !== sessionId) selectSession(sessionId)
+  }, [sessions, currentSessionId, selectSession, sessionId])
 
   const eventCount = useMemo(() => {
     if (!currentSessionId) return 0
@@ -183,7 +169,7 @@ export default function App() {
       <div
         data-fv-theme={theme}
         style={{
-          height: '100vh',
+          height: embed ? '100%' : '100vh',
           display: 'flex',
           flexDirection: 'column',
           background: embed ? 'transparent' : 'var(--mantine-color-dark-8)',
@@ -194,11 +180,11 @@ export default function App() {
 
         <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: 12, padding: embed ? 8 : 12 }}>
           {/* 左栏：会话叙事线 */}
-          <div style={{ width: 400, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
+          <div style={{ width: 270, flexShrink: 0, display: "flex", flexDirection: "column", gap: 12, minWidth: 0, minHeight: 0, overflow: "hidden" }}>
             <Panel
               title="用户输入"
               subtitle="用户消息与插件注入的上下文"
-              rootStyle={{ flex: '0 0 auto', maxHeight: '42%' }}
+              rootStyle={{ flex: '0 0 118px' }}
             >
               <UserInputView />
             </Panel>
@@ -213,7 +199,7 @@ export default function App() {
           </div>
 
           {/* 右侧：可视化画布 */}
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" }}>
             <Tabs
               value={tab}
               onChange={setTab}
@@ -250,5 +236,17 @@ export default function App() {
         </div>
       </div>
     </MantineProvider>
+  )
+}
+
+/** 独立页面入口：读 URL 参数（?session=&theme=）。 */
+export default function App() {
+  const params = new URLSearchParams(window.location.search)
+  return (
+    <AppBody
+      embed={params.get('embed') === '1'}
+      sessionId={params.get('session')}
+      theme={params.get('theme') === 'dark' ? 'dark' : 'light'}
+    />
   )
 }

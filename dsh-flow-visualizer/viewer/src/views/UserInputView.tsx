@@ -60,7 +60,7 @@ export function UserInputView() {
 
   return (
     <Stack gap={10} p={12}>
-      {userMsgs.map((m, i) => (
+      {[...userMsgs].sort((a, b) => b.time - a.time).map((m, i) => (
         <Box
           key={i}
           p="sm"
@@ -73,7 +73,6 @@ export function UserInputView() {
           <Group gap={6} mb={6} wrap="nowrap">
             <Badge size="xs" variant="light" color="blue">
               Turn {m.turn}
-              {m.step ? ` · Step ${m.step}` : ''}
             </Badge>
             <Text size="xs" c="dimmed" style={{ marginLeft: 'auto', flexShrink: 0 }}>
               {fmtTime(m.time)}
