@@ -11,7 +11,7 @@ export function apply(ctx: any): void {
         name: 'conversation.view',
         id: 'flow',
         order: 20,
-        label: () => '数据流',
+        label: () => '调度',
         inject: (sessionId: string) => ({ sessionId }),
       },
       FlowTab,

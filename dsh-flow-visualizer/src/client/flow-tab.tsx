@@ -48,7 +48,7 @@ export function FlowTab(props: any) {
       const s = sentinelRef.current
       if (!s) return
       const tabEl = Array.from(document.querySelectorAll('[role="tab"]')).find((t) =>
-        (t.textContent || '').includes('数据流'),
+        (t.textContent || '').includes('调度'),
       ) as HTMLElement | undefined
       const ta = document.querySelector('textarea')
       const sr = s.getBoundingClientRect()
@@ -111,7 +111,7 @@ export function FlowTab(props: any) {
         >
           <AppBody embed sessionId={props?.sessionId ?? null} theme={dark ? 'dark' : 'light'} />
           <div style={{ position: 'absolute', right: 6, bottom: 4, fontSize: 9, color: '#9aa0ab', opacity: 0.6, pointerEvents: 'none' }}>
-            flow-tracer 0.8.9
+            flow-tracer 0.9.0
           </div>
         </div>
       )}

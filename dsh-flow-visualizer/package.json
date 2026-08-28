@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-flow-tracer",
-  "version": "0.8.9",
+  "version": "0.9.0",
   "description": "DSH flow visualizer plugin: collect runtime events and stream them to a local viewer",
   "type": "module",
   "main": "lib/index.js",

@@ -26,7 +26,7 @@ dsh web
 
 ## 使用
 
-- **web 内嵌**：会话页「数据流」tab（与「轨迹」平级），iframe 嵌入 Viewer，按当前会话深链，embed 模式无独立 header
+- **web 内嵌**：会话页「调度」tab（与「轨迹」平级），iframe 嵌入 Viewer，按当前会话深链，embed 模式无独立 header
 - **Viewer**：浏览器打开 `http://127.0.0.1:9527`（配置 `autoOpen: true` 可启动时自动打开）
   - 左栏：用户输入（含插件注入的上下文）+ 事件明细（可展开输入/输出快照）
   - 右栏 Tab 一 **Cordis 总线**：四层时序（注册者→触发者→事件→监听者）+ 真实时间轴耗时瀑布，hover 联动、点击检查输入输出
@@ -69,7 +69,7 @@ npm run typecheck   # 后端类型检查
 
 ## 已知问题
 
-- **Hub 桌面客户端**：「数据流」tab 在部分桌面版本（WKWebView 壳）中不渲染（组件挂载即失败，清缓存/重启无效）；同版本 Chrome 访问正常。已报障 Hub 维护者。桌面用户请暂用浏览器访问 `http://127.0.0.1:<port>`（端口见启动日志）。
+- **Hub 桌面客户端**：「调度」tab 在部分桌面版本（WKWebView 壳）中不渲染（组件挂载即失败，清缓存/重启无效）；同版本 Chrome 访问正常。已报障 Hub 维护者。桌面用户请暂用浏览器访问 `http://127.0.0.1:<port>`（端口见启动日志）。
 
 ## 故障排查
 
@@ -88,4 +88,4 @@ sed -i '' -e '/^version:/d' -e '/^refs:/d' -e 's/^ *//' ~/.dsh/.credentials.yaml
 ## 边界与路线
 
 - 事件注册者（owner）与工具归属来自静态表/安装产物扫描：Cordis 运行时无注册者元数据（见 `docs/技术方案.md` D.7 spike 结论）
-- v1.1：DSH web「数据流」tab 集成（`conversation.view` slot）、上游 PR `ToolDefinition.source`、会话回放、OTel 导出
+- v1.1：DSH web「调度」tab 集成（`conversation.view` slot）、上游 PR `ToolDefinition.source`、会话回放、OTel 导出
