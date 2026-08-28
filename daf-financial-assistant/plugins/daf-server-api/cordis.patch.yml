@@ -1,0 +1,4 @@
+# daf-server-api bundle patch layer (Phase 0 spike): mount the carrier plugin.
+- insert:
+    - id: daf-server-api
+      name: '@daf/dsh-server-api'

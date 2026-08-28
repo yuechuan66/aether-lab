@@ -1,0 +1,3 @@
+# Server profile patch layer.
+# host/port are passed via CLI flags (see Dockerfile CMD); nothing to override.
+[]

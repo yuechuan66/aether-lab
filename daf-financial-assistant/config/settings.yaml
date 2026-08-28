@@ -1,0 +1,21 @@
+# 本地容器验证配置：经 host.internal 走宿主机 codemaker 网关。
+# 生产配置见 settings.example.yaml（deepseek-official 直连）。
+
+llm-pi-ai:
+  providers:
+    codemaker:
+      apiKeyEnv: CMHUB_9CA735782AC72426_API_KEY
+      api: openai-responses
+      baseURL: "http://192.168.5.2:15721/v1"   # Colima(vz) 自动转发到宿主 loopback 网关；IP 变化时跑 scripts/sync-host-ip.sh
+      models:
+        - id: "deepseek-v4-pro"
+          name: "Deepseek V4 Pro"
+          contextWindow: 1000000
+          input: [text]
+
+agent-default-model:
+  provider: codemaker
+  model: "deepseek-v4-pro"
+
+permission:
+  defaultPreset: workspace-write
