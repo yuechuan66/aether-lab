@@ -1,0 +1,47 @@
+services:
+  dsh-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dsh-financial-assistant
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      # nginx 与本服务共享网络命名空间（见下），80 由同 netns 内的 nginx 监听。
+      # TLS 由上游统一接入层终结，内部纯 HTTP。
+      - "127.0.0.1:8080:80"
+      # 注：DSH 在 netns 内只绑 loopback，发布 3000 不可达（有意如此）；
+      # 容器内调试用 docker exec 或经 nginx。
+    volumes:
+      # LLM provider + permission preset config (see config/settings.example.yaml).
+      - ./config/settings.yaml:/app/.dsh/settings.yaml:ro
+      # Session persistence + audit material survives container rebuilds.
+      - dsh-sessions:/app/.dsh/sessions
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: "4.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+    security_opt:
+      - no-new-privileges:true
+
+  # DSH 出于安全拒绝绑定非 loopback（0.0.0.0 会被 CLI 拒绝）。
+  # 因此 nginx 共享 dsh-server 的网络命名空间：DSH 永远只监听 127.0.0.1，
+  # 对外流量一律经 nginx（仅放行 /v1/）。
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: dsh-nginx
+    restart: unless-stopped
+    network_mode: service:dsh-server
+    depends_on:
+      - dsh-server
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+volumes:
+  dsh-sessions:

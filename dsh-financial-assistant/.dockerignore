@@ -1,0 +1,9 @@
+.git
+docs
+data
+dist
+*.log
+.env
+config/settings.yaml
+**/node_modules
+plugins/dsh-server-api/lib

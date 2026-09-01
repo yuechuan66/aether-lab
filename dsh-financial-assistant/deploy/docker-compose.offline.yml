@@ -1,0 +1,41 @@
+# 离线部署专用 compose：image: 直接引用 docker load 导入的镜像（无源码、不构建）。
+# 与开发版 docker-compose.yml 的唯一区别：build: → image:。
+services:
+  dsh-server:
+    image: dsh-financial-assistant:__VERSION__
+    container_name: dsh-financial-assistant
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      # nginx 与本服务共享网络命名空间（见下），80 由同 netns 内的 nginx 监听。
+      # TLS 由上游统一接入层终结，内部纯 HTTP。
+      - "127.0.0.1:8080:80"
+    volumes:
+      - ./config/settings.yaml:/app/.dsh/settings.yaml:ro
+      - dsh-sessions:/app/.dsh/sessions
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: "4.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+    security_opt:
+      - no-new-privileges:true
+
+  # DSH 只监听 netns 内 loopback（CLI 拒绝 0.0.0.0），对外流量一律经 nginx（仅 /v1/）。
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: dsh-nginx
+    restart: unless-stopped
+    network_mode: service:dsh-server
+    depends_on:
+      - dsh-server
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+volumes:
+  dsh-sessions:

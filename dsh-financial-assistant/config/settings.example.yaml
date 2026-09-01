@@ -1,0 +1,18 @@
+# DSH server 运行时配置（挂载到 /app/.dsh/settings.yaml，热加载）。
+# 复制为 config/settings.yaml 后按需修改。密钥不放这里——走环境变量（见 .env.example）。
+
+# DeepSeek 官方直连适配器（provider 路由名 deepseek-official）。
+llm-deepseek:
+  baseURL: https://api.deepseek.com
+  apiKeyEnv: DEEPSEEK_API_KEY   # 每请求从环境变量解析
+
+# 新会话默认模型。
+agent-default-model:
+  provider: deepseek-official
+  model: deepseek-chat
+
+# 权限预设：workspace-write = 沙箱限工作区写 + 工具审批走 ask。
+# ask 产生的 approval/requested 帧经 /v1/sessions/:id/approvals 应答。
+# （需要完全放开时才用 danger-full-access，金融生产不建议。）
+permission:
+  defaultPreset: workspace-write

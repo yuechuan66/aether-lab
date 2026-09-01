@@ -7,4 +7,5 @@ node_modules/
 dist/
 build/
 .DS_Store
-daf-financial-assistant/
+.dev-logs/
+.dev-workspace/

@@ -1,0 +1,16 @@
+{
+  "name": "dsh-profile-server",
+  "private": true,
+  "dependencies": {
+    "dsh-server-api": "file:../../../plugins/dsh-server-api"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "dsh-server-api"
+      ]
+    }
+  }
+}
