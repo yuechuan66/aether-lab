@@ -1,5 +1,5 @@
 /**
- * @daf/dsh-server-api — Phase 1 carrier plugin.
+ * dsh-server-api — Phase 1 carrier plugin.
  *
  * One shared mux/host subscription (MuxHub) + self-defined /v1 REST/SSE
  * contract over ctx.webServer, driving ctx.apiProxy. External Agent clients
@@ -9,18 +9,18 @@ import type { Ctx } from './types.js'
 import { MuxHub } from './hub.js'
 import { makeHandlers } from './routes.js'
 
-export const name = '@daf/dsh-server-api'
+export const name = 'dsh-server-api'
 export const inject = ['webServer', 'apiProxy']
 
 export function apply(ctx: Ctx): void {
-  const log = (...a: unknown[]) => console.log('[daf-server]', ...a)
+  const log = (...a: unknown[]) => console.log('[dsh-server]', ...a)
 
-  const apiKeys = (process.env.DAF_API_KEYS ?? '')
+  const apiKeys = (process.env.DSH_API_KEYS ?? '')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)
   if (!apiKeys.length) {
-    log('WARNING: DAF_API_KEYS not set — all protected routes will answer 503')
+    log('WARNING: DSH_API_KEYS not set — all protected routes will answer 503')
   }
 
   const hub = new MuxHub(ctx.apiProxy, log)

@@ -1,7 +1,7 @@
 {
-  "name": "@daf/dsh-server-api",
+  "name": "dsh-server-api",
   "version": "0.1.0",
-  "description": "DAF server carrier plugin (Phase 0 spike): REST routes over ctx.webServer + ctx.apiProxy",
+  "description": "DSH server carrier plugin (Phase 0 spike): REST routes over ctx.webServer + ctx.apiProxy",
   "type": "module",
   "main": "lib/index.js",
   "exports": {

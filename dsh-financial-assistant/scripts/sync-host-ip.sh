@@ -43,7 +43,7 @@ fi
 if grep -Eq "baseURL: \"http://[0-9.]+:$GATEWAY_PORT/v1\"" "$SETTINGS_FILE"; then
   sed -i '' -E "s#baseURL: \"http://[0-9.]+:$GATEWAY_PORT/v1\"#baseURL: \"http://$IP:$GATEWAY_PORT/v1\"#" "$SETTINGS_FILE"
   log "baseURL 已更新为 http://$IP:$GATEWAY_PORT/v1 (${SETTINGS_FILE})"
-  log "重启容器生效：docker restart daf-financial-assistant"
+  log "重启容器生效：docker restart dsh-financial-assistant"
 else
   log "settings 里没有指向 :$GATEWAY_PORT 的 baseURL，未改动"
   log "若需本地网关验证，请手动把 baseURL 设为 http://$IP:$GATEWAY_PORT/v1"

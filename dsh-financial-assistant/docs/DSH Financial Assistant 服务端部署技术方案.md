@@ -1,6 +1,6 @@
-# DAF Financial Assistant 服务端部署技术方案
+# DSH Financial Assistant 服务端部署技术方案
 
-> **项目名称**：daf-financial-assistant
+> **项目名称**：dsh-financial-assistant
 > **基于框架**：DeepSeek Harness (DSH) `0.1.1-rc.2`（registry latest，2026-08 核实）
 > **部署模式**：Docker 服务端 + 自研载体插件（Headless API 服务）
 > **文档版本**：v2.0 | 2026-08-27（v1.0 假设的 `dsh serve` / REST 端点 / 配置项经核实均不存在，整体重写）
@@ -9,7 +9,7 @@
 
 ## 1. 方案概述
 
-本方案将 **DAF Financial Assistant** 以纯服务端形态部署：Docker 容器内运行 DSH 内核，通过**自研载体插件**对外暴露 REST/SSE API，供自研 Agent 客户端与上游业务系统接入，不内置任何浏览器界面。
+本方案将 **DSH Financial Assistant** 以纯服务端形态部署：Docker 容器内运行 DSH 内核，通过**自研载体插件**对外暴露 REST/SSE API，供自研 Agent 客户端与上游业务系统接入，不内置任何浏览器界面。
 
 ### 1.1 为什么不能"直接部署"（v1.0 方案失败原因）
 
@@ -48,18 +48,18 @@ DSH 架构为"载体扩展"预留了正式接缝：
 │              Docker Host（共享网络命名空间）                  │
 │                                                             │
 │  ┌──────────────────────────────────────────────────────┐  │
-│  │  daf-financial-assistant (Node 22-slim)               │  │
+│  │  dsh-financial-assistant (Node 22-slim)               │  │
 │  │                                                       │  │
 │  │  dsh --profile server --host 127.0.0.1 --port 3000    │  │
 │  │  ├─ DSH 内核（Cordis composition）                     │  │
 │  │  │   ├─ dsh-base（agent loop / session / llm 适配）    │  │
 │  │  │   ├─ dsh-web-app（apiProxy 网关 / webserver）       │  │
-│  │  │   └─ daf-server-api（自研载体插件）★                │  │
+│  │  │   └─ dsh-server-api（自研载体插件）★                │  │
 │  │  │        ├─ ctx.webServer.register('/v1/...')        │  │
 │  │  │        ├─ API Key 鉴权                              │  │
 │  │  │        ├─ ctx.apiProxy: session.create/prompt      │  │
 │  │  │        └─ 事件订阅 → SSE 流式推送                    │  │
-│  │  └─ @daf/* 金融插件（工具链，装入 profile）             │  │
+│  │  └─ @dsh/* 金融插件（工具链，装入 profile）             │  │
 │  │                                                       │  │
 │  │  DSH 只监听 netns 内 loopback（CLI 拒绝 0.0.0.0）       │  │
 │  │       │ 127.0.0.1:3000                                │  │
@@ -80,7 +80,7 @@ DSH 架构为"载体扩展"预留了正式接缝：
 ## 3. 项目目录结构
 
 ```text
-daf-financial-assistant/
+dsh-financial-assistant/
 ├── Dockerfile                    # 两阶段构建（§6）
 ├── docker-compose.yml            # 开发/自建编排（§7）
 ├── .dockerignore
@@ -88,7 +88,7 @@ daf-financial-assistant/
 ├── dsh-home/                     # 打进镜像的 $DSH_HOME 骨架
 │   └── profiles/server/          # server profile（bundles + file: 插件依赖）
 ├── plugins/
-│   └── daf-server-api/           # 自研载体插件（src/*.ts → lib/index.js）
+│   └── dsh-server-api/           # 自研载体插件（src/*.ts → lib/index.js）
 ├── deploy/
 │   └── docker-compose.offline.yml # 离线包专用 compose 模板（image: 引用）
 ├── config/
@@ -105,7 +105,7 @@ daf-financial-assistant/
 
 ---
 
-## 4. 自研载体插件设计（daf-server-api）★ 核心工作量
+## 4. 自研载体插件设计（dsh-server-api）★ 核心工作量
 
 Cordis 插件，注入 `ctx.webServer` + `ctx.apiProxy`，注册对外路由。
 
@@ -131,7 +131,7 @@ Cordis 插件，注入 `ctx.webServer` + `ctx.apiProxy`，注册对外路由。
 
 ### 4.3 金融工具插件
 
-`@daf/financial-calculator`、`@daf/market-data-fetcher`、`@daf/compliance-checker` 按标准 DSH 插件形态开发（`dsh.bundle.patch` 声明），通过 profile `dependencies` 装入——无需 `allowed_list` 这类不存在的配置，**不装进 profile 就是最有效的白名单**。
+`@dsh/financial-calculator`、`@dsh/market-data-fetcher`、`@dsh/compliance-checker` 按标准 DSH 插件形态开发（`dsh.bundle.patch` 声明），通过 profile `dependencies` 装入——无需 `allowed_list` 这类不存在的配置，**不装进 profile 就是最有效的白名单**。
 
 ---
 
@@ -144,17 +144,17 @@ Cordis 插件，注入 `ctx.webServer` + `ctx.apiProxy`，注册对外路由。
   "name": "dsh-profile-server",
   "private": true,
   "dependencies": {
-    "@daf/dsh-server-api": "^0.1.0",
-    "@daf/financial-calculator": "^0.1.0",
-    "@daf/market-data-fetcher": "^0.1.0",
-    "@daf/compliance-checker": "^0.1.0"
+    "dsh-server-api": "^0.1.0",
+    "@dsh/financial-calculator": "^0.1.0",
+    "@dsh/market-data-fetcher": "^0.1.0",
+    "@dsh/compliance-checker": "^0.1.0"
   },
   "dsh": {
     "profile": {
       "bundles": [
         "@deepseek-ai/dsh-base",
         "@deepseek-ai/dsh-web-app",
-        "@daf/dsh-server-api"
+        "dsh-server-api"
       ]
     }
   }
@@ -206,7 +206,7 @@ WORKDIR /build/repo
 COPY plugins/ plugins/
 COPY dsh-home/ dsh-home/
 # 镜像内构建载体插件（TS -> lib/index.js）
-RUN cd plugins/daf-server-api \
+RUN cd plugins/dsh-server-api \
     && npm install --no-save esbuild@0.25 \
     && ./node_modules/.bin/esbuild src/index.ts --bundle --platform=node --format=esm --outfile=lib/index.js
 # 物化 server profile（file: 依赖把构建好的插件拷入）
@@ -215,24 +215,24 @@ RUN cd dsh-home/profiles/server && pnpm install
 
 # ---- Production stage ----
 FROM node:22-slim
-RUN groupadd -r daf && useradd -r -g daf -d /app -s /sbin/nologin daf \
+RUN groupadd -r dsh && useradd -r -g dsh -d /app -s /sbin/nologin dsh \
     && apt-get update && apt-get install -y --no-install-recommends ca-certificates curl \
     && rm -rf /var/lib/apt/lists/* \
-    && mkdir -p /app/workspace && chown -R daf:daf /app
+    && mkdir -p /app/workspace && chown -R dsh:dsh /app
 # ⚠️ 坑1：COPY 会把 npm bin 符号链接解引用成普通文件，必须重建软链——
 # 否则 ESM 从 /usr/local/bin 向上解析，找不到 @deepseek-ai/* 依赖（ERR_MODULE_NOT_FOUND）
 COPY --from=builder /usr/local/lib/node_modules/@deepseek-ai/dsh \
                     /usr/local/lib/node_modules/@deepseek-ai/dsh
 RUN ln -sf ../lib/node_modules/@deepseek-ai/dsh/lib/bin.js /usr/local/bin/dsh
-# ⚠️ 坑2：$DSH_HOME 必须 daf 属主（启动要写 profiles/node_modules 与 sessions）
-COPY --from=builder --chown=daf:daf /build/repo/dsh-home /app/.dsh
+# ⚠️ 坑2：$DSH_HOME 必须 dsh 属主（启动要写 profiles/node_modules 与 sessions）
+COPY --from=builder --chown=dsh:dsh /build/repo/dsh-home /app/.dsh
 # ⚠️ 坑3：命名卷首次挂载从镜像路径继承属主——路径不存在会变成 root，
-# daf 写不进 sessions 会导致轮次静默空转。必须镜像内预建
-RUN mkdir -p /app/.dsh/sessions && chown daf:daf /app/.dsh/sessions
+# dsh 写不进 sessions 会导致轮次静默空转。必须镜像内预建
+RUN mkdir -p /app/.dsh/sessions && chown dsh:dsh /app/.dsh/sessions
 
 WORKDIR /app
-USER daf
-ENV DSH_HOME=/app/.dsh DAF_WORKSPACE=/app/workspace NODE_ENV=production TZ=Asia/Shanghai
+USER dsh
+ENV DSH_HOME=/app/.dsh DSH_WORKSPACE=/app/workspace NODE_ENV=production TZ=Asia/Shanghai
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
   CMD node -e "fetch('http://localhost:3000/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 EXPOSE 3000
@@ -244,13 +244,13 @@ CMD ["dsh", "--profile", "server", "--host", "127.0.0.1", "--port", "3000", "--n
 
 ## 7. docker-compose.yml（已起栈验证 ✅）
 
-以仓库根目录 `docker-compose.yml` 为准。**核心设计：nginx 共享 daf-server 的网络命名空间**——因为 DSH 拒绝绑定非 loopback（§6 坑4），DSH 永远只听 127.0.0.1，对外流量一律经同 netns 内的 nginx（仅放行 `/v1/`）。
+以仓库根目录 `docker-compose.yml` 为准。**核心设计：nginx 共享 dsh-server 的网络命名空间**——因为 DSH 拒绝绑定非 loopback（§6 坑4），DSH 永远只听 127.0.0.1，对外流量一律经同 netns 内的 nginx（仅放行 `/v1/`）。
 
 ```yaml
 services:
-  daf-server:
+  dsh-server:
     build: { context: ., dockerfile: Dockerfile }
-    container_name: daf-financial-assistant
+    container_name: dsh-financial-assistant
     restart: unless-stopped
     env_file: .env
     ports:
@@ -270,10 +270,10 @@ services:
 
   nginx:
     image: nginx:1.27-alpine
-    container_name: daf-nginx
+    container_name: dsh-nginx
     restart: unless-stopped
-    network_mode: service:daf-server     # ← 共享 daf-server 的 netns
-    depends_on: [ daf-server ]
+    network_mode: service:dsh-server     # ← 共享 dsh-server 的 netns
+    depends_on: [ dsh-server ]
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
 
@@ -281,7 +281,7 @@ volumes:
   dsh-sessions:
 ```
 
-> **运维注意**：`network_mode: service:` 下，重启/重建 daf-server 会重建网络命名空间，nginx 会滞留在旧 netns（连接失败）。**重启 daf-server 后必须一并重启 nginx**（`docker compose up -d` 会处理）。
+> **运维注意**：`network_mode: service:` 下，重启/重建 dsh-server 会重建网络命名空间，nginx 会滞留在旧 netns（连接失败）。**重启 dsh-server 后必须一并重启 nginx**（`docker compose up -d` 会处理）。
 > `deploy.resources.reservations` 在非 swarm compose 下被忽略，已移除；`limits` Compose v2 生效。
 
 ### .env
@@ -291,8 +291,8 @@ volumes:
 DEEPSEEK_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
 
 # ===== 载体插件 =====
-DAF_API_KEYS=<接入方 api-key 列表，逗号分隔>
-DAF_AUDIT_LOG=true
+DSH_API_KEYS=<接入方 api-key 列表，逗号分隔>
+DSH_AUDIT_LOG=true
 
 TZ=Asia/Shanghai
 ```
@@ -304,14 +304,14 @@ TZ=Asia/Shanghai
 > **TLS 由上游统一接入层终结**，容器内这段是纯 HTTP。以仓库 `nginx/default.conf` 为准：
 
 ```nginx
-limit_req_zone $binary_remote_addr zone=daf:10m rate=10r/s;
+limit_req_zone $binary_remote_addr zone=dsh:10m rate=10r/s;
 
 server {
     listen 80;
-    server_name daf.internal.example.com;
+    server_name dsh.internal.example.com;
 
     location /v1/ {
-        # 与 daf-server 共享网络命名空间，直接走 loopback。
+        # 与 dsh-server 共享网络命名空间，直接走 loopback。
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
         proxy_set_header Connection '';      # SSE 必需
@@ -319,7 +319,7 @@ server {
         proxy_cache off;
         proxy_read_timeout 600s;              # 长轮次
         proxy_send_timeout 600s;
-        limit_req zone=daf burst=20 nodelay;
+        limit_req zone=dsh burst=20 nodelay;
     }
 
     # 其余路径（含 DSH 浏览器 UI 兜底）一律不暴露。
@@ -379,11 +379,11 @@ server {
 | **Phase 0（spike，1-2 天）** | 最小载体插件：注册 1 个 POST 路由，调 `session.create` + `session.prompt` 跑固定任务，收事件流返回文本 | 证实 `ctx.apiProxy` 真实签名与事件订阅方式；3 并发会话冒烟 |
 | **Phase 1** | 完整契约（§4.1）+ API Key 鉴权 + SSE 流式 + 会话续聊/取消 | 自研客户端端到端跑通多轮对话 |
 | **Phase 2** | Docker 镜像 + nginx 反代（纯 HTTP）+ 审计采集 + 压测 | 本文档 §9 清单全部落地 |
-| **Phase 3** | @daf/* 金融工具插件接入；出站管控设施；多实例评估 | 生产就绪评审 |
+| **Phase 3** | @dsh/* 金融工具插件接入；出站管控设施；多实例评估 | 生产就绪评审 |
 
 ### 12.1 Phase 0 spike 结论（2026-08-27 已验证 ✅）
 
-代码：`plugins/daf-server-api`（TS，esbuild 产出 `lib/index.js`），试验 profile `~/.dsh/profiles/dafspike`（bundles = `dsh-base` + `dsh-web-app` + 本插件，`link:` 本地链接）。
+代码：`plugins/dsh-server-api`（TS，esbuild 产出 `lib/index.js`），试验 profile `~/.dsh/profiles/dshspike`（bundles = `dsh-base` + `dsh-web-app` + 本插件，`link:` 本地链接）。
 
 **端到端跑通**：`POST /v1/run {task}` → 创建会话 → prompt → 消费事件流 → 返回模型文本；**3 并发请求各自独立会话、结果正确、真并行**（1+1→2 / 2+2→4 / 3+3→6，各 ~1.4s）。
 
@@ -401,7 +401,7 @@ server {
 
 ### 12.2 Phase 1 结论（2026-08-27 已验证 ✅）
 
-代码：`plugins/daf-server-api@0.1.0`（TS，`src/{index,hub,routes,types}.ts`，esbuild + `tsc` 零错误）。
+代码：`plugins/dsh-server-api@0.1.0`（TS，`src/{index,hub,routes,types}.ts`，esbuild + `tsc` 零错误）。
 
 **已验证能力**（全部端到端实测）：
 
@@ -419,7 +419,7 @@ server {
 **新核实的契约事实**：
 
 1. **会话恢复 = 同 sessionId + 同 cwd 再 `create`**；cwd 不一致报 `session-conflict`，但**错误 details 携带 `existingCwd`** —— 插件已实现自动重试，客户端无感。
-2. 新会话 cwd 默认取 `DAF_WORKSPACE` 环境变量（缺省为进程 cwd）——生产镜像必须显式设置，保证确定性。
+2. 新会话 cwd 默认取 `DSH_WORKSPACE` 环境变量（缺省为进程 cwd）——生产镜像必须显式设置，保证确定性。
 3. 反问应答：`apiProxy.respond({type:'client-response', rpcId:<question 帧的 rpcId>, result:{ok:true, value:{sessionId, answer:{answers:[{id, selected[], custom?}]}}}})`；receipt `{accepted:false, reason:'not-pending'}` 映射 409。审批应答同形（`{sessionId, approvalId, outcome:'allowed-once'|'rejected'}`），端点已实现；因本机 `danger-full-access` 权限预设未触发真审批帧，待权限收紧后复验。
 4. SSE 帧目录：`session/event`（原始事件透传）/ `question` / `question-resolved` / `approval` / `approval-resolved` / `status` / `agent-error` / `stream-error` / `done`。
 5. 阻塞模式默认超时 300s（`timeoutMs` 可调，上限 600s）。
@@ -447,8 +447,8 @@ server {
 
 **镜像构建踩坑全记录**（已修进 Dockerfile 注释）：
 1. `COPY` 解引用 npm bin 符号链接 → ESM 从 `/usr/local/bin` 解析失败（`ERR_MODULE_NOT_FOUND`）→ 镜像内 `ln -sf` 重建；
-2. `$DSH_HOME` 经 `COPY` 后属主 root → 启动写 `profiles/node_modules` 报 `EACCES` → `--chown=daf:daf`；
-3. sessions 命名卷从镜像继承属主，路径不存在则变 root → **轮次静默空转（7ms 返回空文本）** → 镜像内预建 daf 属主目录；
+2. `$DSH_HOME` 经 `COPY` 后属主 root → 启动写 `profiles/node_modules` 报 `EACCES` → `--chown=dsh:dsh`；
+3. sessions 命名卷从镜像继承属主，路径不存在则变 root → **轮次静默空转（7ms 返回空文本）** → 镜像内预建 dsh 属主目录；
 4. DSH CLI 拒绝 `--host 0.0.0.0`（防 RCE 暴露）→ nginx 共享网络命名空间方案（§7）。
 
 **容器访问宿主模型网关（重要纠正）**：本地验证曾以为需要 socat 端口转发，**实测不需要**——Colima(vz) 自带 VM→宿主 loopback 转发，容器内直接用网桥 IP（`host.lima.internal`，通常 `192.168.5.2`）即可访问宿主 127.0.0.1 上的网关。维护脚本：`scripts/sync-host-ip.sh`（VM 重建后 IP 漂移时同步 `config/settings.yaml` 的 baseURL）。生产无此问题（直连 `api.deepseek.com`）。
@@ -473,4 +473,4 @@ server {
 
 ---
 
-*本文档由 DAF 基础设施团队维护，变更需经安全评审。*
+*本文档由 DSH 基础设施团队维护，变更需经安全评审。*

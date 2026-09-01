@@ -6,4 +6,4 @@ dist
 .env
 config/settings.yaml
 **/node_modules
-plugins/daf-server-api/lib
+plugins/dsh-server-api/lib

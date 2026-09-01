@@ -1,0 +1,4 @@
+# dsh-server-api bundle patch layer (Phase 0 spike): mount the carrier plugin.
+- insert:
+    - id: dsh-server-api
+      name: 'dsh-server-api'

@@ -1,6 +1,6 @@
 /**
  * /v1 HTTP surface — the self-defined contract external Agent clients consume.
- * Auth: Bearer API keys from DAF_API_KEYS (comma-separated). Fail-closed: with
+ * Auth: Bearer API keys from DSH_API_KEYS (comma-separated). Fail-closed: with
  * no keys configured, every protected route answers 503.
  */
 import { randomUUID } from 'node:crypto'
@@ -139,7 +139,7 @@ export function makeHandlers(deps: RouteDeps) {
   }
 
   const health = (_req: IncomingMessage, res: ServerResponse) =>
-    json(res, 200, { ok: true, service: 'daf-server-api', version: '0.1.0', time: Date.now() })
+    json(res, 200, { ok: true, service: 'dsh-server-api', version: '0.1.0', time: Date.now() })
 
   const createSession = async (req: IncomingMessage, res: ServerResponse) => {
     if (!authorized(req)) return json(res, apiKeys.length ? 401 : 503, { ok: false, error: 'unauthorized' })
@@ -149,7 +149,7 @@ export function makeHandlers(deps: RouteDeps) {
     } catch {
       return json(res, 400, { ok: false, error: 'bad-json' })
     }
-    const workspace = process.env.DAF_WORKSPACE || process.cwd()
+    const workspace = process.env.DSH_WORKSPACE || process.cwd()
     const payload: { sessionId?: string; cwd?: string } = {
       cwd: typeof body.cwd === 'string' ? body.cwd : workspace,
     }

@@ -1,4 +1,4 @@
-# DAF server 运行时配置（挂载到 /app/.dsh/settings.yaml，热加载）。
+# DSH server 运行时配置（挂载到 /app/.dsh/settings.yaml，热加载）。
 # 复制为 config/settings.yaml 后按需修改。密钥不放这里——走环境变量（见 .env.example）。
 
 # DeepSeek 官方直连适配器（provider 路由名 deepseek-official）。

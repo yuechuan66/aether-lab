@@ -279,7 +279,7 @@ function makeHandlers(deps) {
     const m = /^Bearer\s+(.+)$/i.exec(h);
     return !!m && apiKeys.includes(m[1].trim());
   };
-  const health = (_req, res) => json(res, 200, { ok: true, service: "daf-server-api", version: "0.1.0", time: Date.now() });
+  const health = (_req, res) => json(res, 200, { ok: true, service: "dsh-server-api", version: "0.1.0", time: Date.now() });
   const createSession = async (req, res) => {
     if (!authorized(req)) return json(res, apiKeys.length ? 401 : 503, { ok: false, error: "unauthorized" });
     let body;
@@ -288,7 +288,7 @@ function makeHandlers(deps) {
     } catch {
       return json(res, 400, { ok: false, error: "bad-json" });
     }
-    const workspace = process.env.DAF_WORKSPACE || process.cwd();
+    const workspace = process.env.DSH_WORKSPACE || process.cwd();
     const payload = {
       cwd: typeof body.cwd === "string" ? body.cwd : workspace
     };
@@ -489,13 +489,13 @@ function makeHandlers(deps) {
 }
 
 // src/index.ts
-var name = "@daf/dsh-server-api";
+var name = "dsh-server-api";
 var inject = ["webServer", "apiProxy"];
 function apply(ctx) {
-  const log = (...a) => console.log("[daf-server]", ...a);
-  const apiKeys = (process.env.DAF_API_KEYS ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  const log = (...a) => console.log("[dsh-server]", ...a);
+  const apiKeys = (process.env.DSH_API_KEYS ?? "").split(",").map((s) => s.trim()).filter(Boolean);
   if (!apiKeys.length) {
-    log("WARNING: DAF_API_KEYS not set \u2014 all protected routes will answer 503");
+    log("WARNING: DSH_API_KEYS not set \u2014 all protected routes will answer 503");
   }
   const hub = new MuxHub(ctx.apiProxy, log);
   hub.start();
